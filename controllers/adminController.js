@@ -32,7 +32,7 @@ const addDoctor = async (req, res) => {
         
       }
 
-      // hashing doctor password
+      // hashing doctor passwords
       const salt = await bcrypt.genSalt(10)
       const hashedPassword = await bcrypt.hash(password, salt)
 
@@ -87,23 +87,62 @@ const addDoctor = async (req, res) => {
 
 const loginAdmin = async (req, res) => {
   try {
-    
-    const {email, password} = req.body
+    const { email, password } = req.body;
 
-    if(email === process.env.ADMIN_EMAIL && password === process.env.ADMIN_PASSWORD) {
-      const token = jwt.sign(email+password,process.env.JWT_SECRET )
-      res.json({success:true, token})
+    if (email === process.env.ADMIN_EMAIL && password === process.env.ADMIN_PASSWORD) {
+      const payload = {
+        email, // Add email to the payload
+        role: "admin", // Optional: Add any additional claims to the token
+      };
 
+      // Generate the token
+      const token = jwt.sign(payload, process.env.JWT_SECRET);
 
+      // Send the token in the response
+      res.json({ success: true, token });
     } else {
-      res.json({success:false, message:"invalid credentails"})
+      res.json({ success: false, message: "Invalid credentials" });
     }
-
   } catch (error) {
-    console.log(error)
-    res.json({success:false, message:error.message})
+    console.error(error);
+    res.status(500).json({ success: false, message: "Server error" });
   }
 }
+// API to get all doctors list for admin panel 
+// const allDoctors = async (req, res) => {
+//   try {
+
+//     const doctors = await doctorModel.find().select("-password")
+//     res.json({success:true , doctors})
+//   } catch (error) {
+//     console.log(error)
+//     res.json({success:false, message:error.message})
+//   }
+  
+// }
 
 
-export {addDoctor, loginAdmin}
+const allDoctors = async (req, res) => {
+  try {
+    // Fetch all doctors, excluding the password field
+    const doctors = await doctorModel.find({}).select("-password");
+
+    // Send the response
+    res.json({
+      success: true,
+      doctors,
+    });
+  } catch (error) {
+    console.log("Error fetching doctors:", error);
+    res.json({
+      success: false,
+      message: error.message,
+    });
+   
+  }
+  
+};
+
+
+
+export {addDoctor, loginAdmin, allDoctors}
